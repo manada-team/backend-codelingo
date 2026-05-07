@@ -26,7 +26,7 @@ public class CodeExecutionService {
     private static final Map<String, LanguageConfig> LANGUAGES = Map.of(
             "python", new LanguageConfig("python:3.11-slim",          "solution.py",
                     List.of("python3", "/code/solution.py")),
-            "java",   new LanguageConfig("eclipse-temurin:17-jre-alpine", "Main.java",
+            "java", new LanguageConfig("eclipse-temurin:17-jdk-alpine", "Main.java",
                     List.of("sh", "-c", "java /code/Main.java")),
             "c",      new LanguageConfig("gcc:13",                    "solution.c",
                     List.of("sh", "-c", "gcc /code/solution.c -o /tmp/solution && /tmp/solution"))
@@ -111,7 +111,7 @@ public class CodeExecutionService {
                 "--cpus=0.5",
                 "--pids-limit=50",
                 "--read-only",
-                "--tmpfs=/tmp:size=32m",
+                "--tmpfs=/tmp:exec,size=32m",
                 "-v", tempDir.toAbsolutePath() + ":/code:ro"
         ));
         cmd.add(config.image());
