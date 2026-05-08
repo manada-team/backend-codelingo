@@ -30,14 +30,3 @@ application.properties
 docker-compose.yml
 .idea/
 *.iml
-src/main/java/com/codelingo/model/Level.java
-src/main/java/com/codelingo/model/LevelGroup.java
-src/main/java/com/codelingo/model/UserProgress.java
-src/main/java/com/codelingo/controller/LevelController.java
-src/main/java/com/codelingo/repository/LevelGroupRepository.java
-src/main/java/com/codelingo/repository/LevelRepository.java
-src/main/java/com/codelingo/repository/UserProgressRepository.java
-src/main/java/com/codelingo/repository/UserRepository.java
-src/main/java/com/codelingo/dto/LevelProgressRequest.java
-src/main/java/com/codelingo/service/LevelService.java
-src/main/java/com/codelingo/service/StreakService.java
