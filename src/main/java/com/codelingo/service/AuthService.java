@@ -52,6 +52,6 @@ public class AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        return new JwtResponse(token, user.getId(), user.getUsername(), user.getEmail());
+        return new JwtResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
     }
 }
