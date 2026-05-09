@@ -1,5 +1,6 @@
 package com.codelingo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -41,6 +42,10 @@ public class LevelGroup {
     @Column(nullable = false)
     private Difficulty difficulty;
 
+//    @OneToMany(mappedBy = "levelGroup", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<Level> levels;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "levelGroup", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Level> levels;
 
