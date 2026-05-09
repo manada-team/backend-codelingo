@@ -1,5 +1,6 @@
 package com.codelingo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -52,6 +53,10 @@ public class Level {
     @JoinColumn(name = "level_group_id", nullable = false)
     private LevelGroup levelGroup;
 
+//    @OneToMany(mappedBy = "level", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<UserProgress> userProgressList;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "level", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserProgress> userProgressList;
 }

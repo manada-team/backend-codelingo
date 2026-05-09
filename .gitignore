@@ -23,8 +23,8 @@
 hs_err_pid*
 replay_pid*
 
-pom.xml
-application.properties
+#pom.xml
+#application.properties
 
 .env.example
 docker-compose.yml
