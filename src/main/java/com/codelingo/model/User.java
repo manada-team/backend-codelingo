@@ -37,7 +37,11 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // Sistema de rachas tipo Duolingo
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable = false)
+    private Role role = Role.PLAYER;
+
     @Builder.Default
     @Column(nullable = false)
     private int currentStreak = 0;
@@ -48,7 +52,6 @@ public class User {
 
     private LocalDate lastActivityDate;
 
-    // XP total acumulado
     @Builder.Default
     @Column(nullable = false)
     private int totalXp = 0;

@@ -40,8 +40,8 @@ public class Level {
     private String expectedOutput;
 
     // Lenguaje de programacion del nivel (ej: "java", "python", "javascript")
-    @Column(nullable = false)
-    private String language;
+//    @Column(nullable = false)
+//    private String language;
 
     // XP que otorga completar este nivel
     @Builder.Default

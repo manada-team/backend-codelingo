@@ -1,8 +1,13 @@
 package com.codelingo.service;
 
+import com.codelingo.dto.AnswerCheckResponse;
+import com.codelingo.dto.LevelRequest;
+import com.codelingo.dto.LevelResponse;
 import com.codelingo.model.Level;
+import com.codelingo.model.LevelGroup;
 import com.codelingo.model.User;
 import com.codelingo.model.UserProgress;
+import com.codelingo.repository.LevelGroupRepository;
 import com.codelingo.repository.LevelRepository;
 import com.codelingo.repository.UserProgressRepository;
 import com.codelingo.repository.UserRepository;
@@ -12,33 +17,72 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class LevelService {
 
     private final LevelRepository levelRepository;
+    private final LevelGroupRepository levelGroupRepository;
     private final UserProgressRepository userProgressRepository;
     private final UserRepository userRepository;
     private final StreakService streakService;
 
-    public List<Level> getAllLevels() {
-        return levelRepository.findAllByOrderByLevelNumberAsc();
+    public List<LevelResponse> getAllLevels() {
+        return levelRepository.findAllByOrderByLevelNumberAsc()
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    public Level getLevelById(Long id) {
-        return levelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nivel no encontrado: " + id));
+    public LevelResponse getLevelById(Long id) {
+        return toResponse(findLevel(id));
     }
 
-    /**
-     * Registra el intento del jugador en un nivel.
-     * Por ahora valida comparando el output del codigo con el esperado.
-     * Logica de ejecucion real se puede agregar en una iteracion futura.
-     */
     @Transactional
-    public UserProgress submitLevel(User user, Long levelId, String submittedCode) {
-        Level level = getLevelById(levelId);
+    public LevelResponse createLevel(LevelRequest request) {
+        LevelGroup group = levelGroupRepository.findById(request.getLevelGroupId())
+                .orElseThrow(() -> new IllegalArgumentException("Grupo no encontrado: " + request.getLevelGroupId()));
+
+        Level level = Level.builder()
+                .levelNumber(request.getLevelNumber())
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .challengeContent(request.getChallengeContent())
+                .expectedOutput(request.getExpectedOutput())
+//                .language(request.getLanguage())
+                .xpReward(request.getXpReward() > 0 ? request.getXpReward() : 10)
+                .levelGroup(group)
+                .build();
+
+        return toResponse(levelRepository.save(level));
+    }
+
+    @Transactional
+    public LevelResponse updateLevel(Long id, LevelRequest request) {
+        Level level = findLevel(id);
+        LevelGroup group = levelGroupRepository.findById(request.getLevelGroupId())
+                .orElseThrow(() -> new IllegalArgumentException("Grupo no encontrado: " + request.getLevelGroupId()));
+
+        level.setLevelNumber(request.getLevelNumber());
+        level.setTitle(request.getTitle());
+        level.setDescription(request.getDescription());
+        level.setChallengeContent(request.getChallengeContent());
+        level.setExpectedOutput(request.getExpectedOutput());
+//        level.setLanguage(request.getLanguage());
+        level.setXpReward(request.getXpReward() > 0 ? request.getXpReward() : 10);
+        level.setLevelGroup(group);
+
+        return toResponse(levelRepository.save(level));
+    }
+
+    @Transactional
+    public void deleteLevel(Long id) {
+        levelRepository.delete(findLevel(id));
+    }
+
+    @Transactional
+    public AnswerCheckResponse checkAnswer(User user, Long levelId, String playerAnswer) {
+        Level level = findLevel(levelId);
 
         UserProgress progress = userProgressRepository
                 .findByUserAndLevelId(user, levelId)
@@ -46,36 +90,54 @@ public class LevelService {
 
         progress.setAttempts(progress.getAttempts() + 1);
 
-        boolean isCorrect = validateSubmission(level, submittedCode);
+        boolean correct = level.getExpectedOutput() != null
+                && playerAnswer != null
+                && playerAnswer.trim().equals(level.getExpectedOutput().trim());
 
-        if (isCorrect && !progress.isCompleted()) {
+        int xpEarned = 0;
+        if (correct && !progress.isCompleted()) {
             progress.setCompleted(true);
             progress.setCompletedAt(LocalDateTime.now());
             progress.setScore(calculateScore(level, progress.getAttempts()));
-
-            // Sumar XP al usuario
             user.setTotalXp(user.getTotalXp() + level.getXpReward());
             userRepository.save(user);
-
-            // Actualizar racha
             streakService.registerActivity(user);
+            xpEarned = level.getXpReward();
         }
 
-        return userProgressRepository.save(progress);
+        userProgressRepository.save(progress);
+
+        String message = correct
+                ? (xpEarned > 0 ? "¡Correcto! Ganaste " + xpEarned + " XP." : "¡Correcto! Nivel ya completado.")
+                : "Respuesta incorrecta. Intentá de nuevo.";
+
+        return new AnswerCheckResponse(correct, xpEarned, progress.getAttempts(), message);
     }
 
-    private boolean validateSubmission(Level level, String submittedCode) {
-        // TODO: integrar un motor de ejecucion de codigo real
-        // Por ahora es un placeholder que siempre valida contra expectedOutput
-        return submittedCode != null
-                && level.getExpectedOutput() != null
-                && submittedCode.trim().equals(level.getExpectedOutput().trim());
+    private Level findLevel(Long id) {
+        return levelRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Nivel no encontrado: " + id));
     }
 
     private int calculateScore(Level level, int attempts) {
-        // Mas intentos = menos score, minimo 10% del XP reward
         int base = level.getXpReward() * 10;
         int penalty = (attempts - 1) * 10;
         return Math.max(base - penalty, level.getXpReward());
+    }
+
+    private LevelResponse toResponse(Level level) {
+        LevelResponse r = new LevelResponse();
+        r.setId(level.getId());
+        r.setLevelNumber(level.getLevelNumber());
+        r.setTitle(level.getTitle());
+        r.setDescription(level.getDescription());
+        r.setChallengeContent(level.getChallengeContent());
+//        r.setLanguage(level.getLanguage());
+        r.setXpReward(level.getXpReward());
+        if (level.getLevelGroup() != null) {
+            r.setLevelGroupId(level.getLevelGroup().getId());
+            r.setLevelGroupName(level.getLevelGroup().getName());
+        }
+        return r;
     }
 }

@@ -23,6 +23,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -30,18 +31,27 @@ public class UserController {
                 "id", user.getId(),
                 "username", user.getUsername(),
                 "email", user.getEmail(),
+                "role", user.getRole().name(),
                 "currentStreak", user.getCurrentStreak(),
                 "longestStreak", user.getLongestStreak(),
                 "totalXp", user.getTotalXp(),
-                "lastActivityDate", user.getLastActivityDate() != null ? user.getLastActivityDate().toString() : ""
+                "lastActivityDate",
+                user.getLastActivityDate() != null
+                        ? user.getLastActivityDate().toString()
+                        : ""
         ));
     }
 
     @GetMapping("/me/progress")
-    public ResponseEntity<List<UserProgress>> getMyProgress(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<UserProgress>> getMyProgress(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        return ResponseEntity.ok(userProgressRepository.findByUser(user));
+        List<UserProgress> progress = userProgressRepository.findByUser(user);
+
+        return ResponseEntity.ok(progress);
     }
 }
