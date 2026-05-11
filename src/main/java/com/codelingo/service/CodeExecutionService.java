@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -20,16 +19,12 @@ import java.util.concurrent.TimeUnit;
 public class CodeExecutionService {
 
     private static final int TIMEOUT_SECONDS = 10;
-    private static final long MEMORY_MB = 128;
     private static final int MAX_OUTPUT_CHARS = 50_000;
 
     private static final Map<String, LanguageConfig> LANGUAGES = Map.of(
-            "python", new LanguageConfig("python:3.11-slim",          "solution.py",
-                    List.of("python3", "/code/solution.py")),
-            "java", new LanguageConfig("eclipse-temurin:17-jdk-alpine", "Main.java",
-                    List.of("sh", "-c", "java /code/Main.java")),
-            "c",      new LanguageConfig("gcc:13",                    "solution.c",
-                    List.of("sh", "-c", "gcc /code/solution.c -o /tmp/solution && /tmp/solution"))
+            "python", new LanguageConfig("solution.py",  List.of("python3", "{file}")),
+            "java",   new LanguageConfig("Main.java",    List.of("sh", "-c", "cd {dir} && javac Main.java && java Main")),
+            "c",      new LanguageConfig("solution.c",   List.of("sh", "-c", "gcc {file} -o {dir}/solution && {dir}/solution"))
     );
 
     public ExecutionResponse execute(String code, String language, String stdin) {
@@ -45,7 +40,7 @@ public class CodeExecutionService {
             Path codeFile = tempDir.resolve(config.filename());
             Files.writeString(codeFile, code);
 
-            List<String> command = buildDockerCommand(tempDir, config);
+            List<String> command = resolveCommand(config.command(), codeFile, tempDir);
 
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(false);
@@ -53,7 +48,6 @@ public class CodeExecutionService {
             long startTime = System.currentTimeMillis();
             Process process = pb.start();
 
-            // Write stdin if provided
             if (stdin != null && !stdin.isBlank()) {
                 try (var os = process.getOutputStream()) {
                     os.write(stdin.getBytes());
@@ -100,23 +94,12 @@ public class CodeExecutionService {
         }
     }
 
-    private List<String> buildDockerCommand(Path tempDir, LanguageConfig config) {
-        List<String> cmd = new ArrayList<>(List.of(
-                "docker", "run",
-                "--rm",
-                "-i",            // enables stdin piping
-                "--network=none",
-                "--memory=" + MEMORY_MB + "m",
-                "--memory-swap=" + MEMORY_MB + "m",
-                "--cpus=0.5",
-                "--pids-limit=50",
-                "--read-only",
-                "--tmpfs=/tmp:exec,size=32m",
-                "-v", tempDir.toAbsolutePath() + ":/code:ro"
-        ));
-        cmd.add(config.image());
-        cmd.addAll(config.runCommand());
-        return cmd;
+    private List<String> resolveCommand(List<String> template, Path codeFile, Path tempDir) {
+        return template.stream()
+                .map(part -> part
+                        .replace("{file}", codeFile.toAbsolutePath().toString())
+                        .replace("{dir}",  tempDir.toAbsolutePath().toString()))
+                .toList();
     }
 
     private Thread readStreamAsync(java.io.InputStream stream, StringBuilder buffer) {
@@ -152,5 +135,5 @@ public class CodeExecutionService {
         } catch (IOException ignored) {}
     }
 
-    private record LanguageConfig(String image, String filename, List<String> runCommand) {}
+    private record LanguageConfig(String filename, List<String> command) {}
 }
