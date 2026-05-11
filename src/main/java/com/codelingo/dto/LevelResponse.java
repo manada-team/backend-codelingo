@@ -9,7 +9,8 @@ public class LevelResponse {
     private String title;
     private String description;
     private String challengeContent;
-//    private String language;
+    private String expectedOutput;
+    //    private String language;
     private int xpReward;
     private Long levelGroupId;
     private String levelGroupName;

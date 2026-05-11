@@ -132,6 +132,7 @@ public class LevelService {
         r.setTitle(level.getTitle());
         r.setDescription(level.getDescription());
         r.setChallengeContent(level.getChallengeContent());
+        r.setExpectedOutput(level.getExpectedOutput());  // ← nueva línea
 //        r.setLanguage(level.getLanguage());
         r.setXpReward(level.getXpReward());
         if (level.getLevelGroup() != null) {
