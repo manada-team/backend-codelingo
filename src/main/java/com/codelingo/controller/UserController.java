@@ -32,6 +32,8 @@ public class UserController {
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        long completedLevels = userProgressRepository.countByUserAndCompletedTrue(user);
+
         return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
                 "username", user.getUsername(),
@@ -40,6 +42,7 @@ public class UserController {
                 "currentStreak", user.getCurrentStreak(),
                 "longestStreak", user.getLongestStreak(),
                 "totalXp", user.getTotalXp(),
+                "completedLevels", completedLevels,
                 "createdAt", user.getCreatedAt().toString(),
                 "lastActivityDate",
                 user.getLastActivityDate() != null

@@ -9,11 +9,7 @@ RUN mvn clean package -Dmaven.test.skip=true -q
 # ── Stage 2: runtime ─────────────────────────────────────────────────────────
 FROM eclipse-temurin:17-jre-alpine
 
-## Docker CLI needed so the app can spawn sandbox containers
-#RUN apk add --no-cache docker-cli
-
 RUN apk add --no-cache python3 gcc musl-dev openjdk17
-
 
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
