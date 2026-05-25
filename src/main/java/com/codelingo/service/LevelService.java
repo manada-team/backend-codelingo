@@ -88,21 +88,24 @@ public class LevelService {
                 .findByUserAndLevelId(user, levelId)
                 .orElse(UserProgress.builder().user(user).level(level).build());
 
-        progress.setAttempts(progress.getAttempts() + 1);
-
         boolean correct = level.getExpectedOutput() != null
                 && playerAnswer != null
                 && playerAnswer.trim().equals(level.getExpectedOutput().trim());
 
         int xpEarned = 0;
-        if (correct && !progress.isCompleted()) {
-            progress.setCompleted(true);
-            progress.setCompletedAt(LocalDateTime.now());
-            progress.setScore(calculateScore(level, progress.getAttempts()));
-            user.setTotalXp(user.getTotalXp() + level.getXpReward());
-            userRepository.save(user);
-            streakService.registerActivity(user);
-            xpEarned = level.getXpReward();
+
+        if (!progress.isCompleted()) {
+            progress.setAttempts(progress.getAttempts() + 1);
+
+            if (correct) {
+                progress.setCompleted(true);
+                progress.setCompletedAt(LocalDateTime.now());
+                progress.setScore(calculateScore(level, progress.getAttempts()));
+                user.setTotalXp(user.getTotalXp() + level.getXpReward());
+                userRepository.save(user);
+                streakService.registerActivity(user);
+                xpEarned = level.getXpReward();
+            }
         }
 
         userProgressRepository.save(progress);
@@ -132,8 +135,7 @@ public class LevelService {
         r.setTitle(level.getTitle());
         r.setDescription(level.getDescription());
         r.setChallengeContent(level.getChallengeContent());
-        r.setExpectedOutput(level.getExpectedOutput());  // ← nueva línea
-//        r.setLanguage(level.getLanguage());
+        r.setExpectedOutput(level.getExpectedOutput());
         r.setXpReward(level.getXpReward());
         if (level.getLevelGroup() != null) {
             r.setLevelGroupId(level.getLevelGroup().getId());

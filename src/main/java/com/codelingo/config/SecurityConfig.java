@@ -73,7 +73,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         String rawOrigins = System.getenv().getOrDefault(
                 "ALLOWED_ORIGINS",
-                "\thttp://localhost:3000,http://localhost:3001,https://codelingo-tau.vercel.app"
+                "http://localhost:3000,http://localhost:3001,https://codelingo-tau.vercel.app"
         );
         config.setAllowedOrigins(Arrays.asList(rawOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
