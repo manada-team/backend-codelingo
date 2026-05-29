@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LevelRepository extends JpaRepository<Level, Long> {
-    Optional<Level> findByLevelNumber(int levelNumber);
     List<Level> findByLevelGroupOrderByLevelNumberAsc(LevelGroup levelGroup);
     List<Level> findAllByOrderByLevelNumberAsc();
+    Optional<Level> findByLevelNumber(int levelNumber);
+
 }
