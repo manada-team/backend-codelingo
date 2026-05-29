@@ -14,15 +14,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
+
+    private static final Set<String> VALID_LANGUAGES = Set.of("python", "java", "c");
 
     private final UserRepository userRepository;
     private final UserProgressRepository userProgressRepository;
@@ -34,21 +36,46 @@ public class UserController {
 
         long completedLevels = userProgressRepository.countByUserAndCompletedTrue(user);
 
-        return ResponseEntity.ok(Map.of(
-                "id", user.getId(),
-                "username", user.getUsername(),
-                "email", user.getEmail(),
-                "role", user.getRole().name(),
-                "currentStreak", user.getCurrentStreak(),
-                "longestStreak", user.getLongestStreak(),
-                "totalXp", user.getTotalXp(),
-                "completedLevels", completedLevels,
-                "createdAt", user.getCreatedAt().toString(),
-                "lastActivityDate",
-                user.getLastActivityDate() != null
-                        ? user.getLastActivityDate().toString()
-                        : ""
-        ));
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("id", user.getId());
+        response.put("username", user.getUsername());
+        response.put("email", user.getEmail());
+        response.put("role", user.getRole().name());
+        response.put("currentStreak", user.getCurrentStreak());
+        response.put("longestStreak", user.getLongestStreak());
+        response.put("totalXp", user.getTotalXp());
+        response.put("xpPython", user.getXpPython());
+        response.put("xpJava", user.getXpJava());
+        response.put("xpC", user.getXpC());
+        response.put("activeLanguage", user.getActiveLanguage() != null ? user.getActiveLanguage() : "");
+        response.put("completedLevels", completedLevels);
+        response.put("createdAt", user.getCreatedAt().toString());
+        response.put("lastActivityDate", user.getLastActivityDate() != null ? user.getLastActivityDate().toString() : "");
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/me/language")
+    @Transactional
+    public ResponseEntity<?> setActiveLanguage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, String> body) {
+
+        String lang = body.get("language");
+        if (lang == null || !VALID_LANGUAGES.contains(lang)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Lenguaje inválido"));
+        }
+
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Solo se puede elegir una vez
+        if (user.getActiveLanguage() != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Ya tenés un lenguaje de racha activo"));
+        }
+
+        user.setActiveLanguage(lang);
+        userRepository.save(user);
+        return ResponseEntity.ok(Map.of("activeLanguage", lang));
     }
 
     @GetMapping("/me/progress")
@@ -59,8 +86,10 @@ public class UserController {
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        List<UserProgressResponse> result = userProgressRepository.findByUser(user)
+        List<UserProgressResponse> result = userProgressRepository
+                .findByUser(user)
                 .stream()
+                .filter(p -> user.getActiveLanguage() == null || user.getActiveLanguage().equals(p.getLanguage()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
 
@@ -99,15 +128,17 @@ public class UserController {
                     r.setEmail(u.getEmail());
                     r.setRole(u.getRole().name());
                     r.setTotalXp(u.getTotalXp());
+                    r.setXpPython(u.getXpPython());
+                    r.setXpJava(u.getXpJava());
+                    r.setXpC(u.getXpC());
                     r.setCurrentStreak(u.getCurrentStreak());
                     r.setLongestStreak(u.getLongestStreak());
+                    r.setActiveLanguage(u.getActiveLanguage() != null ? u.getActiveLanguage() : "");
                     r.setCreatedAt(u.getCreatedAt().toString());
                     r.setLastActivityDate(
                             u.getLastActivityDate() != null ? u.getLastActivityDate().toString() : ""
                     );
-                    r.setCompletedLevels(
-                            userProgressRepository.countByUserAndCompletedTrue(u)
-                    );
+                    r.setCompletedLevels(userProgressRepository.countByUserAndCompletedTrue(u));
                     return r;
                 })
                 .collect(Collectors.toList());

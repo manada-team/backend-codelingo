@@ -67,4 +67,18 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserProgress> progressList;
+    @Builder.Default
+    @Column(name = "xp_python", nullable = false)
+    private int xpPython = 0;
+
+    @Builder.Default
+    @Column(name = "xp_java", nullable = false)
+    private int xpJava = 0;
+
+    @Builder.Default
+    @Column(name = "xp_c", nullable = false)
+    private int xpC = 0;
+
+    @Column(name = "active_language")
+    private String activeLanguage;
 }

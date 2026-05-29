@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "user_progress",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "level_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "level_id", "language"})
 )
 @Data
 @Builder
@@ -54,4 +54,7 @@ public class UserProgress {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "level_id", nullable = false)
     private Level level;
+
+    @Column(nullable = false)
+    private String language;
 }
