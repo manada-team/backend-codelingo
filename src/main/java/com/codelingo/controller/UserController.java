@@ -14,9 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -36,7 +34,9 @@ public class UserController {
 
         long completedLevels = userProgressRepository.countByUserAndCompletedTrue(user);
 
-        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        List<String> startedList = parseStartedLanguages(user.getStartedLanguages());
+
+        Map<String, Object> response = new LinkedHashMap<>();
         response.put("id", user.getId());
         response.put("username", user.getUsername());
         response.put("email", user.getEmail());
@@ -48,6 +48,7 @@ public class UserController {
         response.put("xpJava", user.getXpJava());
         response.put("xpC", user.getXpC());
         response.put("activeLanguage", user.getActiveLanguage() != null ? user.getActiveLanguage() : "");
+        response.put("startedLanguages", startedList);
         response.put("completedLevels", completedLevels);
         response.put("createdAt", user.getCreatedAt().toString());
         response.put("lastActivityDate", user.getLastActivityDate() != null ? user.getLastActivityDate().toString() : "");
@@ -68,14 +69,20 @@ public class UserController {
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Solo se puede elegir una vez
-        if (user.getActiveLanguage() != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ya tenés un lenguaje de racha activo"));
+        List<String> started = new ArrayList<>(parseStartedLanguages(user.getStartedLanguages()));
+
+        if (!started.contains(lang)) {
+            started.add(lang);
+            user.setStartedLanguages(String.join(",", started));
         }
 
         user.setActiveLanguage(lang);
         userRepository.save(user);
-        return ResponseEntity.ok(Map.of("activeLanguage", lang));
+
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("activeLanguage", lang);
+        resp.put("startedLanguages", started);
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/me/progress")
@@ -89,7 +96,9 @@ public class UserController {
         List<UserProgressResponse> result = userProgressRepository
                 .findByUser(user)
                 .stream()
-                .filter(p -> user.getActiveLanguage() == null || user.getActiveLanguage().equals(p.getLanguage()))
+                .filter(p -> user.getActiveLanguage() == null
+                        || user.getActiveLanguage().isEmpty()
+                        || user.getActiveLanguage().equals(p.getLanguage()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
 
@@ -135,13 +144,16 @@ public class UserController {
                     r.setLongestStreak(u.getLongestStreak());
                     r.setActiveLanguage(u.getActiveLanguage() != null ? u.getActiveLanguage() : "");
                     r.setCreatedAt(u.getCreatedAt().toString());
-                    r.setLastActivityDate(
-                            u.getLastActivityDate() != null ? u.getLastActivityDate().toString() : ""
-                    );
+                    r.setLastActivityDate(u.getLastActivityDate() != null ? u.getLastActivityDate().toString() : "");
                     r.setCompletedLevels(userProgressRepository.countByUserAndCompletedTrue(u));
                     return r;
                 })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(result);
+    }
+
+    private List<String> parseStartedLanguages(String raw) {
+        if (raw == null || raw.isBlank()) return new ArrayList<>();
+        return new ArrayList<>(Arrays.asList(raw.split(",")));
     }
 }
