@@ -61,10 +61,28 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-//    private List<UserProgress> progressList;
-
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserProgress> progressList;
+
+    @Builder.Default
+    @Column(name = "xp_python", nullable = false)
+    private int xpPython = 0;
+
+    @Builder.Default
+    @Column(name = "xp_java", nullable = false)
+    private int xpJava = 0;
+
+    @Builder.Default
+    @Column(name = "xp_c", nullable = false)
+    private int xpC = 0;
+
+    // Lenguaje seleccionado actualmente para jugar
+    @Column(name = "active_language")
+    private String activeLanguage;
+
+    // Lenguajes ya iniciados, separados por coma: "python,java"
+    @Builder.Default
+    @Column(name = "started_languages", nullable = false)
+    private String startedLanguages = "";
 }

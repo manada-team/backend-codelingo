@@ -44,8 +44,12 @@ public class LevelController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<LevelResponse> updateLevel(@PathVariable Long id, @Valid @RequestBody LevelRequest request) {
-        return ResponseEntity.ok(levelService.updateLevel(id, request));
+    public ResponseEntity<?> updateLevel(@PathVariable Long id, @Valid @RequestBody LevelRequest request) {
+        try {
+            return ResponseEntity.ok(levelService.updateLevel(id, request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -60,10 +64,12 @@ public class LevelController {
             @PathVariable Long id,
             @Valid @RequestBody AnswerCheckRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-
-        User user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        return ResponseEntity.ok(levelService.checkAnswer(user, id, request.getAnswer()));
+        try {
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            return ResponseEntity.ok(levelService.checkAnswer(user, id, request.getAnswer()));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new AnswerCheckResponse(false, 0, 0, "Error al verificar la respuesta. Intentá de nuevo."));
+        }
     }
 }

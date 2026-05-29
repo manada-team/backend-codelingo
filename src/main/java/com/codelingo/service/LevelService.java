@@ -94,9 +94,10 @@ public class LevelService {
     public AnswerCheckResponse checkAnswer(User user, Long levelId, String playerAnswer) {
         Level level = findLevel(levelId);
 
+        String lang = user.getActiveLanguage() != null ? user.getActiveLanguage() : "python";
         UserProgress progress = userProgressRepository
-                .findByUserAndLevelId(user, levelId)
-                .orElse(UserProgress.builder().user(user).level(level).build());
+                .findByUserAndLevelIdAndLanguage(user, levelId, lang)
+                .orElse(UserProgress.builder().user(user).level(level).language(lang).build());
 
         boolean correct = level.getExpectedOutput() != null
                 && playerAnswer != null
@@ -112,6 +113,13 @@ public class LevelService {
                 progress.setCompletedAt(LocalDateTime.now());
                 progress.setScore(calculateScore(level, progress.getAttempts()));
                 user.setTotalXp(user.getTotalXp() + level.getXpReward());
+                if (user.getActiveLanguage() != null) {
+                    switch (user.getActiveLanguage()) {
+                        case "python" -> user.setXpPython(user.getXpPython() + level.getXpReward());
+                        case "java"   -> user.setXpJava(user.getXpJava() + level.getXpReward());
+                        case "c"      -> user.setXpC(user.getXpC() + level.getXpReward());
+                    }
+                }
                 userRepository.save(user);
                 streakService.registerActivity(user);
                 xpEarned = level.getXpReward();
