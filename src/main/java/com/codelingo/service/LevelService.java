@@ -63,6 +63,16 @@ public class LevelService {
         LevelGroup group = levelGroupRepository.findById(request.getLevelGroupId())
                 .orElseThrow(() -> new IllegalArgumentException("Grupo no encontrado: " + request.getLevelGroupId()));
 
+        // agregar esto:
+        levelRepository.findByLevelNumber(request.getLevelNumber())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException(
+                            "El número de nivel " + request.getLevelNumber() + " ya está en uso"
+                    );
+                });
+
+
         level.setLevelNumber(request.getLevelNumber());
         level.setTitle(request.getTitle());
         level.setDescription(request.getDescription());
@@ -143,4 +153,5 @@ public class LevelService {
         }
         return r;
     }
+
 }
