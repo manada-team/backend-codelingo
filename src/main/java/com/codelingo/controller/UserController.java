@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private static final Set<String> VALID_LANGUAGES = Set.of("python", "java", "c");
+    private static final Set<String> VALID_THEMES = Set.of("default", "hacker", "retro-arcade", "sunset");
+
 
     private final UserRepository userRepository;
     private final UserProgressRepository userProgressRepository;
@@ -50,6 +52,7 @@ public class UserController {
         response.put("activeLanguage", user.getActiveLanguage() != null ? user.getActiveLanguage() : "");
         response.put("startedLanguages", startedList);
         response.put("completedLevels", completedLevels);
+        response.put("theme", user.getTheme() != null ? user.getTheme() : "default");
         response.put("createdAt", user.getCreatedAt().toString());
         response.put("lastActivityDate", user.getLastActivityDate() != null ? user.getLastActivityDate().toString() : "");
         return ResponseEntity.ok(response);
@@ -156,4 +159,26 @@ public class UserController {
         if (raw == null || raw.isBlank()) return new ArrayList<>();
         return new ArrayList<>(Arrays.asList(raw.split(",")));
     }
+
+    @PostMapping("/me/theme")
+    @Transactional
+    public ResponseEntity<?> setTheme(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, String> body) {
+
+        String theme = body.get("theme");
+        if (theme == null || !VALID_THEMES.contains(theme)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Tema inválido"));
+        }
+
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        user.setTheme(theme);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("theme", theme));
+    }
+
+
 }

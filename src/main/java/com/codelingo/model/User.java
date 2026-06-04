@@ -85,4 +85,8 @@ public class User {
     @Builder.Default
     @Column(name = "started_languages", nullable = false)
     private String startedLanguages = "";
+
+    @Builder.Default
+    @Column(name = "theme", nullable = false)
+    private String theme = "default";
 }
