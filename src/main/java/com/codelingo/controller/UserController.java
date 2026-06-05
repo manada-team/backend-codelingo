@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private static final Set<String> VALID_LANGUAGES = Set.of("python", "java", "c");
-    private static final Set<String> VALID_THEMES = Set.of("default", "hacker", "retro-arcade", "sunset");
+    private static final Set<String> VALID_THEMES = Set.of("default", "hacker", "retro-arcade", "sunset", "albirroja");
 
 
     private final UserRepository userRepository;
