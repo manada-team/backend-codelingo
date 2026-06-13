@@ -89,4 +89,8 @@ public class User {
     @Builder.Default
     @Column(name = "theme", nullable = false)
     private String theme = "default";
+
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
 }
