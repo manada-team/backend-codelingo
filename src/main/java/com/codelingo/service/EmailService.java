@@ -4,7 +4,6 @@ import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +22,12 @@ public class EmailService {
     private String frontendUrl;
 
     private void sendEmail(String toEmail, String subject, String body) {
+        System.out.println("=== EMAIL SERVICE ===");
+        System.out.println("API Key presente: " + (sendGridApiKey != null && !sendGridApiKey.isBlank()));
+        System.out.println("API Key empieza con: " + (sendGridApiKey != null && sendGridApiKey.length() > 5 ? sendGridApiKey.substring(0, 5) : "NULL_O_CORTA"));
+        System.out.println("Enviando a: " + toEmail);
+        System.out.println("Desde: " + fromEmail);
+
         Email from = new Email(fromEmail);
         Email to = new Email(toEmail);
         Content content = new Content("text/plain", body);
@@ -34,13 +39,20 @@ public class EmailService {
             request.setMethod(Method.POST);
             request.setEndpoint("mail/send");
             request.setBody(mail.build());
-            sg.api(request);
+            Response response = sg.api(request);
+            System.out.println("=== SENDGRID RESPONSE ===");
+            System.out.println("Status: " + response.getStatusCode());
+            System.out.println("Body: " + response.getBody());
+            System.out.println("Headers: " + response.getHeaders());
         } catch (IOException e) {
+            System.out.println("=== SENDGRID ERROR ===");
+            System.out.println("Error: " + e.getMessage());
             throw new RuntimeException("Error enviando email", e);
         }
     }
 
     public void sendPasswordResetEmail(String toEmail, String token) {
+        System.out.println("=== FORGOT PASSWORD para: " + toEmail);
         String resetLink = frontendUrl + "/?resetToken=" + token;
         sendEmail(toEmail,
                 "Restablecer contraseña - Codelingo",
@@ -51,6 +63,7 @@ public class EmailService {
     }
 
     public void sendVerificationEmail(String toEmail, String token) {
+        System.out.println("=== VERIFICATION EMAIL para: " + toEmail);
         String verifyLink = frontendUrl + "/?verifyToken=" + token;
         sendEmail(toEmail,
                 "Verificá tu cuenta - Codelingo",
