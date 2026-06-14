@@ -15,7 +15,7 @@ public class EmailService {
     @Value("${sendgrid.api.key}")
     private String sendGridApiKey;
 
-    @Value("${spring.mail.username:codelingo.ua@gmail.com}")
+    @Value("${mail.from:codelingo.ua@gmail.com}")
     private String fromEmail;
 
     @Value("${codelingo.frontend.url:https://codelingo-tau.vercel.app}")
