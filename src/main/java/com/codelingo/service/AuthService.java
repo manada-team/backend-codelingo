@@ -87,19 +87,22 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
-        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
-            passwordResetTokenRepository.deleteByUserId(user.getId());
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Este correo no está registrado en Codelingo. Probá con el email de tu cuenta."
+                ));
 
-            String token = UUID.randomUUID().toString();
-            PasswordResetToken resetToken = PasswordResetToken.builder()
-                    .token(token)
-                    .user(user)
-                    .expiresAt(LocalDateTime.now().plusHours(1))
-                    .build();
-            passwordResetTokenRepository.save(resetToken);
+        passwordResetTokenRepository.deleteByUserId(user.getId());
 
-            emailService.sendPasswordResetEmail(user.getEmail(), token);
-        });
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiresAt(LocalDateTime.now().plusHours(1))
+                .build();
+        passwordResetTokenRepository.save(resetToken);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), token);
     }
 
     @Transactional
