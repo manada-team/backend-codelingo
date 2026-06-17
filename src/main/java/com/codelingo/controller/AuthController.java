@@ -43,7 +43,7 @@ public class AuthController {
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request);
         return ResponseEntity.ok(Map.of(
-                "message", "Si existe una cuenta con ese email, recibirás un correo con instrucciones"
+                "message", "Revisá tu bandeja de entrada y seguí las instrucciones, si no ves el correo electrónico, asegurate de revisar tu bandeja de spam o correos no deseados."
         ));
     }
 
