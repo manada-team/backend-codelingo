@@ -21,16 +21,10 @@ public class EmailService {
     @Value("${codelingo.frontend.url:https://codelingo-tau.vercel.app}")
     private String frontendUrl;
 
-    private void sendEmail(String toEmail, String subject, String body) {
-        System.out.println("=== EMAIL SERVICE ===");
-        System.out.println("API Key presente: " + (sendGridApiKey != null && !sendGridApiKey.isBlank()));
-        System.out.println("API Key empieza con: " + (sendGridApiKey != null && sendGridApiKey.length() > 5 ? sendGridApiKey.substring(0, 5) : "NULL_O_CORTA"));
-        System.out.println("Enviando a: " + toEmail);
-        System.out.println("Desde: " + fromEmail);
-
+    private void sendEmail(String toEmail, String subject, String htmlBody) {
         Email from = new Email(fromEmail);
         Email to = new Email(toEmail);
-        Content content = new Content("text/plain", body);
+        Content content = new Content("text/html", htmlBody);
         Mail mail = new Mail(from, subject, to, content);
 
         SendGrid sg = new SendGrid(sendGridApiKey);
@@ -40,36 +34,36 @@ public class EmailService {
             request.setEndpoint("mail/send");
             request.setBody(mail.build());
             Response response = sg.api(request);
-            System.out.println("=== SENDGRID RESPONSE ===");
             System.out.println("Status: " + response.getStatusCode());
             System.out.println("Body: " + response.getBody());
-            System.out.println("Headers: " + response.getHeaders());
         } catch (IOException e) {
-            System.out.println("=== SENDGRID ERROR ===");
-            System.out.println("Error: " + e.getMessage());
             throw new RuntimeException("Error enviando email", e);
         }
     }
 
     public void sendPasswordResetEmail(String toEmail, String token) {
-        System.out.println("=== FORGOT PASSWORD para: " + toEmail);
         String resetLink = frontendUrl + "/?resetToken=" + token;
-        sendEmail(toEmail,
-                "Restablecer contraseña - Codelingo",
-                "Hola!\n\nRecibimos una solicitud para restablecer tu contraseña en Codelingo.\n\n" +
-                        "Hacé clic en el siguiente enlace:\n" + resetLink + "\n\n" +
-                        "Este enlace expira en 1 hora.\n\nEl equipo de Codelingo"
-        );
+        String html = "<div style='font-family:sans-serif;max-width:480px;margin:auto'>" +
+                "<h2 style='color:#333'>Restablecer contraseña</h2>" +
+                "<p>Recibimos una solicitud para restablecer tu contraseña en <strong>Codelingo</strong>.</p>" +
+                "<p style='text-align:center;margin:32px 0'>" +
+                "<a href='" + resetLink + "' style='background:#e91e8c;color:#fff;padding:12px 28px;" +
+                "border-radius:6px;text-decoration:none;font-weight:bold'>Restablecer contraseña</a></p>" +
+                "<p style='color:#888;font-size:13px'>Este enlace expira en 1 hora. Si no solicitaste esto, ignorá este correo.</p>" +
+                "<p style='color:#aaa;font-size:12px'>— El equipo de Codelingo</p></div>";
+        sendEmail(toEmail, "Restablecer contraseña - Codelingo", html);
     }
 
     public void sendVerificationEmail(String toEmail, String token) {
-        System.out.println("=== VERIFICATION EMAIL para: " + toEmail);
         String verifyLink = frontendUrl + "/?verifyToken=" + token;
-        sendEmail(toEmail,
-                "Verificá tu cuenta - Codelingo",
-                "Hola!\n\nGracias por registrarte en Codelingo.\n\n" +
-                        "Hacé clic en el siguiente enlace para verificar tu cuenta:\n" + verifyLink + "\n\n" +
-                        "Este enlace expira en 24 horas.\n\nEl equipo de Codelingo"
-        );
+        String html = "<div style='font-family:sans-serif;max-width:480px;margin:auto'>" +
+                "<h2 style='color:#333'>Verificá tu cuenta</h2>" +
+                "<p>Gracias por registrarte en <strong>Codelingo</strong>. Hacé clic para activar tu cuenta.</p>" +
+                "<p style='text-align:center;margin:32px 0'>" +
+                "<a href='" + verifyLink + "' style='background:#e91e8c;color:#fff;padding:12px 28px;" +
+                "border-radius:6px;text-decoration:none;font-weight:bold'>Verificar cuenta</a></p>" +
+                "<p style='color:#888;font-size:13px'>Este enlace expira en 24 horas.</p>" +
+                "<p style='color:#aaa;font-size:12px'>— El equipo de Codelingo</p></div>";
+        sendEmail(toEmail, "Verificar cuenta - Codelingo", html);
     }
 }
