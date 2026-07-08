@@ -1,9 +1,12 @@
 package com.codelingo.controller;
 
+import com.codelingo.dto.ProblemProgressResponse;
 import com.codelingo.dto.UserProgressResponse;
 import com.codelingo.dto.UserStatsResponse;
+import com.codelingo.model.ProblemProgress;
 import com.codelingo.model.User;
 import com.codelingo.model.UserProgress;
+import com.codelingo.repository.ProblemProgressRepository;
 import com.codelingo.repository.UserProgressRepository;
 import com.codelingo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserProgressRepository userProgressRepository;
+    private final ProblemProgressRepository problemProgressRepository;
 
     @GetMapping("/me")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
@@ -106,6 +110,42 @@ public class UserController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/me/problem-progress")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ProblemProgressResponse>> getMyProblemProgress(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        List<ProblemProgressResponse> result = problemProgressRepository
+                .findByUser(user)
+                .stream()
+                .filter(p -> user.getActiveLanguage() == null
+                        || user.getActiveLanguage().isEmpty()
+                        || user.getActiveLanguage().equals(p.getLanguage()))
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
+    private ProblemProgressResponse toResponse(ProblemProgress p) {
+        ProblemProgressResponse r = new ProblemProgressResponse();
+        r.setId(p.getId());
+        r.setCompleted(p.isCompleted());
+        r.setCompletedAt(p.getCompletedAt());
+        r.setAttempts(p.getAttempts());
+        r.setScore(p.getScore());
+        if (p.getProblem() != null) {
+            r.setProblemId(p.getProblem().getId());
+            r.setProblemNumber(p.getProblem().getProblemNumber());
+            r.setProblemTitle(p.getProblem().getTitle());
+            r.setXpReward(p.getProblem().getXpReward());
+        }
+        return r;
     }
 
     private UserProgressResponse toResponse(UserProgress p) {
