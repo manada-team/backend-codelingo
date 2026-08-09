@@ -33,6 +33,10 @@ public class Problem {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
+    // Codigo inicial que ve el jugador en el editor al abrir el problema
+    @Column(columnDefinition = "TEXT")
+    private String starterCode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Difficulty difficulty;

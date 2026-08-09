@@ -49,6 +49,7 @@ public class ProblemService {
         r.setProblemNumber(problem.getProblemNumber());
         r.setTitle(problem.getTitle());
         r.setDescription(problem.getDescription());
+        r.setStarterCode(problem.getStarterCode());
         r.setDifficulty(problem.getDifficulty().name());
         r.setXpReward(problem.getXpReward());
         r.setTestCases(problem.getTestCases().stream()
@@ -64,6 +65,7 @@ public class ProblemService {
                 .problemNumber(request.getProblemNumber())
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .starterCode(request.getStarterCode())
                 .difficulty(parseDifficulty(request.getDifficulty()))
                 .xpReward(request.getXpReward() > 0 ? request.getXpReward() : 20)
                 .build();
@@ -88,6 +90,7 @@ public class ProblemService {
         problem.setProblemNumber(request.getProblemNumber());
         problem.setTitle(request.getTitle());
         problem.setDescription(request.getDescription());
+        problem.setStarterCode(request.getStarterCode());
         problem.setDifficulty(parseDifficulty(request.getDifficulty()));
         problem.setXpReward(request.getXpReward() > 0 ? request.getXpReward() : 20);
 
@@ -247,6 +250,7 @@ public class ProblemService {
         r.setProblemNumber(problem.getProblemNumber());
         r.setTitle(problem.getTitle());
         r.setDescription(problem.getDescription());
+        r.setStarterCode(problem.getStarterCode());
         r.setDifficulty(problem.getDifficulty().name());
         r.setXpReward(problem.getXpReward());
 

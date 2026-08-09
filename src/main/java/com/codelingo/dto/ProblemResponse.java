@@ -10,6 +10,7 @@ public class ProblemResponse {
     private int problemNumber;
     private String title;
     private String description;
+    private String starterCode;
     private String difficulty;
     private int xpReward;
     private List<TestCaseView> sampleTestCases;
