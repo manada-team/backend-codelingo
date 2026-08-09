@@ -20,6 +20,8 @@ public class ProblemRequest {
     @NotBlank
     private String description;
 
+    private String starterCode;
+
     @NotBlank
     private String difficulty;
 
